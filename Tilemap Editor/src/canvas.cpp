@@ -7,18 +7,19 @@
 #include "graphics.h"
 #include "rectangle.h"
 
-Canvas::Canvas(Graphics& graphics, const std::string& file_name, float start_offset_x, float start_offset_y, int width, int height) : // file name should be unique
-	sprite_sheet_(graphics.createTextureFromRenderer(file_name, width, height)),
+Canvas::Canvas(Graphics& graphics, const std::string& file_name, float start_offset_x, float start_offset_y, int width, int height) :
 	width_(width), height_(height),
 	x_offset_(start_offset_x), y_offset_(start_offset_y),
 	scale_x_(1), scale_y_(1) {
-	pixels_ = new Uint32[width * height];
-	memset(pixels_, 255, width * height * sizeof(Uint32));
-	SDL_UpdateTexture(sprite_sheet_, NULL, pixels_, width * sizeof(Uint32));
+	sprite_sheet_ = graphics.createSurface(file_name, width, height);
 }
 
-Canvas::~Canvas() {
-	delete[] pixels_;
+Canvas::Canvas(Graphics& graphics, const std::string& file_path, float start_offset_x, float start_offset_y) :
+	x_offset_(start_offset_x), y_offset_(start_offset_y),
+	scale_x_(1), scale_y_(1) {
+	sprite_sheet_ = graphics.loadImage(file_path, false);
+	width_ = sprite_sheet_->w;
+	height_ = sprite_sheet_->h;
 }
 
 void Canvas::move(int x_amount, int y_amount, const Rectangle& bounds) {
@@ -53,10 +54,12 @@ void Canvas::drawToTexture(int x, int y, Uint32 color) {
 	int new_world_y = (int)world_y;
 
 	if (new_world_y > -1 && new_world_y < height_ && new_world_x > -1 && new_world_x < width_) {
-		if (pixels_[new_world_y * width_ + new_world_x] != color) {
-			pixels_[new_world_y * width_ + new_world_x] = color;
-			SDL_UpdateTexture(sprite_sheet_, NULL, pixels_, width_ * sizeof(Uint32));
-		}
+		SDL_LockSurface(sprite_sheet_);
+		Uint8* pixel_array = (Uint8*)sprite_sheet_->pixels_;
+		pixel_array[new_world_y * sprite_sheet_->pitch + new_world_x * sprite_sheet_->format->BytesPerPixel + 0] = (color >> 16) & 0xff;
+		pixel_array[new_world_y * sprite_sheet_->pitch + new_world_x * sprite_sheet_->format->BytesPerPixel + 1] = (color >> 8) & 0xff;
+		pixel_array[new_world_y * sprite_sheet_->pitch + new_world_x * sprite_sheet_->format->BytesPerPixel + 2] = color & 0xff;
+		SDL_UnlockSurface(sprite_sheet_);
 	}
 }
 
@@ -67,7 +70,11 @@ std::optional<Uint32> Canvas::getPixel(int x, int y) {
 	int new_world_y = (int)world_y;
 
 	if (new_world_y > -1 && new_world_y < height_ && new_world_x > -1 && new_world_x < width_) {
-		return std::optional<Uint32>(pixels_[new_world_y * width_ + new_world_x]);
+		Uint8* pixel_array = (Uint8*)sprite_sheet_->pixels_;
+		Uint8 blue = pixel_array[new_world_y * sprite_sheet_->pitch + new_world_x * sprite_sheet_->format->BytesPerPixel + 0];
+		Uint8 green = pixel_array[new_world_y * sprite_sheet_->pitch + new_world_x * sprite_sheet_->format->BytesPerPixel + 1];
+		Uint8 red = pixel_array[new_world_y * sprite_sheet_->pitch + new_world_x * sprite_sheet_->format->BytesPerPixel + 2];
+		return std::optional<Uint32>(SDL_MapRGB(sprite_sheet_->format, red, green, blue));
 	}
 	return std::nullopt;
 }
@@ -103,6 +110,10 @@ void Canvas::snapToBounds(const Rectangle& bounds) {
 	} else if (screen_bottom > bounds.bottom() + difference_y) {
 		y_offset_ = (bounds.bottom() + difference_y - height) / scale_y_ * 1.0f;
 	}
+}
+
+void Canvas::save(Graphics& graphics, const std::string& file_path) {
+	graphics.saveSurface(sprite_sheet_, file_path);
 }
 
 void Canvas::draw(Graphics& graphics) {

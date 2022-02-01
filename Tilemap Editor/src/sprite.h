@@ -13,7 +13,7 @@ struct Sprite {
 	virtual void update() {}
 	void draw(Graphics& graphics, int x, int y);
 protected:
-	SDL_Rect source_rectangle_;
+	int width_, height_;
 private:
-	SDL_Texture* sprite_sheet_;
+	SDL_Surface* sprite_sheet_;
 };

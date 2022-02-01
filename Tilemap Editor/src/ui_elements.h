@@ -45,6 +45,8 @@ struct ButtonPopup : public Button {
 	void draw(Graphics& graphics);
 	bool interact(Graphics& graphics, int x, int y);
 	void aim(int x, int y);
+
+	void set_active(bool toggle) { active_ = toggle; }
 private:
 	std::vector<std::shared_ptr<TextButton>> buttons_;
 	bool active_;

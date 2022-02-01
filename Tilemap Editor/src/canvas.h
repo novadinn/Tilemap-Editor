@@ -9,7 +9,7 @@ struct Rectangle;
 
 struct Canvas {
 	Canvas(Graphics& graphics, const std::string& file_name, float start_offset_x, float start_offset_y, int width, int height);
-	~Canvas();
+	Canvas(Graphics& graphics, const std::string& file_path, float start_offset_x, float start_offset_y);
 
 	void move(int x_amount, int y_amount, const Rectangle& bounds);
 	void scale(float scale_x, int x, int y, const Rectangle& bounds);
@@ -22,10 +22,11 @@ struct Canvas {
 
 	void snapToBounds(const Rectangle& bounds);
 
+	void save(Graphics& graphics, const std::string& file_path);
+
 	void draw(Graphics& graphics);
 private:
-	SDL_Texture* sprite_sheet_;
-	Uint32* pixels_;
+	SDL_Surface* sprite_sheet_;
 
 	int width_, height_;
 	float x_offset_, y_offset_;

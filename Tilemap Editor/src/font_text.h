@@ -10,9 +10,8 @@ struct FontText {
 
 	void draw(Graphics& graphics, int x, int y);
 
-	int get_width() const { return source_rectangle_.w; }
-	int get_height() const { return source_rectangle_.h; }
+	int get_width() const { return text_surface_->w; }
+	int get_height() const { return text_surface_->h; }
 private:
-	SDL_Texture* text_texture_;
-	SDL_Rect source_rectangle_;
+	SDL_Surface* text_surface_;
 };
