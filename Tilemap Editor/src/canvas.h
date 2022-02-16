@@ -8,27 +8,40 @@ struct Graphics;
 struct Rectangle;
 
 struct Canvas {
-	Canvas(Graphics& graphics, const std::string& file_name, float start_offset_x, float start_offset_y, int width, int height);
+	Canvas(Graphics& graphics, float start_offset_x, float start_offset_y, int width, int height);
 	Canvas(Graphics& graphics, const std::string& file_path, float start_offset_x, float start_offset_y);
+	~Canvas();
 
-	void move(int x_amount, int y_amount, const Rectangle& bounds);
-	void scale(float scale_x, int x, int y, const Rectangle& bounds);
+	void startMoving(int x, int y);
+	void move(int x, int previous_x, int y, int previous_y);
+	void stopMoving();
+	void scale(float scale_x, int x, int y);
 
 	void drawToTexture(int x, int y, Uint32 color);
-	std::optional<Uint32> getPixel(int x, int y);
+	std::optional<Uint32> getPixel(int x, int y) const;
 
-	void worldToScreen(float world_x, float world_y, int& screen_x, int& screen_y);
-	void screenToWorld(int screen_x, int screen_y, float& world_x, float& world_y);
+	void save(Graphics& graphics, const std::string& file_path) const;
+
+	void changeSize(Graphics& graphics, int x, int y);
+
+	int get_width() const;
+	int get_height() const;
+	SDL_Surface* get_surface() const;
+
+	void draw(Graphics& graphics) const;
+	void drawGrid(Graphics& graphics, int width, int height) const;
+
+	void worldToScreen(float world_x, float world_y, int& screen_x, int& screen_y) const;
+	void screenToWorld(int screen_x, int screen_y, float& world_x, float& world_y) const;
 
 	void snapToBounds(const Rectangle& bounds);
-
-	void save(Graphics& graphics, const std::string& file_path);
-
-	void draw(Graphics& graphics);
+	bool pointSpriteIntersection(int x, int y) const;
 private:
 	SDL_Surface* sprite_sheet_;
 
-	int width_, height_;
 	float x_offset_, y_offset_;
 	float scale_x_, scale_y_;
+
+	bool moving_;
+	bool loaded_;
 };

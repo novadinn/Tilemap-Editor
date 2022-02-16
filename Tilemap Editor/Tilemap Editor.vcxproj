@@ -149,25 +149,19 @@
   <ItemGroup>
     <ClCompile Include="src\application.cpp" />
     <ClCompile Include="src\canvas.cpp" />
+    <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\input.cpp" />
-    <ClCompile Include="src\interaction_system.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\sprite.cpp" />
-    <ClCompile Include="src\font_text.cpp" />
-    <ClCompile Include="src\tile_editor.cpp" />
     <ClCompile Include="src\ui_elements.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\application.h" />
     <ClInclude Include="src\canvas.h" />
+    <ClInclude Include="src\editor.h" />
     <ClInclude Include="src\graphics.h" />
     <ClInclude Include="src\input.h" />
-    <ClInclude Include="src\interaction_system.h" />
     <ClInclude Include="src\rectangle.h" />
-    <ClInclude Include="src\sprite.h" />
-    <ClInclude Include="src\font_text.h" />
-    <ClInclude Include="src\tile_editor.h" />
     <ClInclude Include="src\ui_elements.h" />
   </ItemGroup>
   <ItemGroup>
@@ -178,6 +172,7 @@
   <ItemGroup>
     <Image Include="content\images\background.bmp" />
     <Image Include="content\images\button_background.bmp" />
+    <Image Include="content\images\palette.bmp" />
     <Image Include="content\images\tile_border.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

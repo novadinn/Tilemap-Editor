@@ -27,22 +27,13 @@
     <ClCompile Include="src\input.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\sprite.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\font_text.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\canvas.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ui_elements.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\interaction_system.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\tile_editor.cpp">
+    <ClCompile Include="src\editor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -56,25 +47,16 @@
     <ClInclude Include="src\input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\sprite.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\font_text.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\rectangle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\canvas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\interaction_system.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\ui_elements.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\tile_editor.h">
+    <ClInclude Include="src\editor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -91,6 +73,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="content\images\background.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="content\images\palette.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

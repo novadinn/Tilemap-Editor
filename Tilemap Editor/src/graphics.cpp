@@ -2,8 +2,6 @@
 
 #include <SDL_ttf.h>
 
-#include "rectangle.h"
-
 //static
 const int Graphics::kScreenWidth = 640;
 //static
@@ -14,7 +12,7 @@ namespace {
 }
 
 Graphics::Graphics() {
-    window_ = SDL_CreateWindow("Platformer Template", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, kScreenWidth, kScreenHeight, SDL_WINDOW_RESIZABLE);
+    window_ = SDL_CreateWindow("Platformer Template", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, kScreenWidth, kScreenHeight, 0);
     screen_ = SDL_GetWindowSurface(window_);
 }
 
@@ -62,22 +60,30 @@ SDL_Surface* Graphics::loadFont(const std::string& file_name, const std::string&
     return sprite_sheets_[index];
 }
 
-void Graphics::blitSurface(SDL_Surface* source, SDL_Rect* source_rectangle, SDL_Rect* destination_rectangle, bool use_autocorrention) {
-    SDL_BlitScaled(source, NULL, screen_, destination_rectangle);
-}
-
-SDL_Surface* Graphics::createSurface(const std::string& name, int width, int height) {
-    if (sprite_sheets_.count(name) == 0) {
-        Uint32* pixels = new Uint32[width * height];
-        memset(pixels, 255, width * height * sizeof(Uint32));
-        pixels_.push_back(pixels);
-        sprite_sheets_[name] = SDL_CreateRGBSurfaceWithFormatFrom(pixels, width, height, 32, 4*width, SDL_PIXELFORMAT_RGBA32);
-    }
-    return sprite_sheets_[name];
+SDL_Surface* Graphics::createSurface(int width, int height) {
+    Uint32* pixels = new Uint32[width * height];
+    memset(pixels, 255, width * height * sizeof(Uint32));
+    pixels_.push_back(pixels);
+    return  SDL_CreateRGBSurfaceWithFormatFrom(pixels, width, height, 32, 4*width, SDL_PIXELFORMAT_BGRA32);
 }
 
 void Graphics::saveSurface(SDL_Surface* surface, const std::string& file_path) {
     SDL_SaveBMP(surface, file_path.c_str());
+}
+
+SDL_Surface* Graphics::changeSurfaceSize(SDL_Surface* surface, int x, int y) {
+    const int width = surface->w + x;
+    const int height = surface->h + y;
+    Uint32* pixels = new Uint32[width * height];
+    memset(pixels, 255, width * height * sizeof(Uint32));
+    pixels_.push_back(pixels);
+    SDL_Surface* changed_surface = SDL_CreateRGBSurfaceWithFormatFrom(pixels, width, height, 32, 4 * width, SDL_PIXELFORMAT_BGRA32);
+    SDL_BlitSurface(surface, NULL, changed_surface, NULL);
+    return changed_surface;
+}
+
+void Graphics::blitSurface(SDL_Surface* source, SDL_Rect* source_rectangle, SDL_Rect* destination_rectangle, bool use_autocorrention) {
+    SDL_BlitScaled(source, source_rectangle, screen_, destination_rectangle);
 }
 
 void Graphics::clear() {
@@ -86,4 +92,36 @@ void Graphics::clear() {
 
 void Graphics::flip() {
     SDL_UpdateWindowSurface(window_);
+}
+
+void Graphics::drawRect(const Rectangle& rectangle, Uint32 border_color, Uint32 fill_color) {
+    SDL_Rect border_rectangle;
+    border_rectangle.x = rectangle.left();
+    border_rectangle.y = rectangle.top();
+    border_rectangle.w = rectangle.width();
+    border_rectangle.h = rectangle.height();
+    SDL_FillRect(screen_, &border_rectangle, border_color);
+    SDL_Rect fill_rectangle;
+    fill_rectangle.x = rectangle.left() + 1;
+    fill_rectangle.y = rectangle.top() + 1;
+    fill_rectangle.w = rectangle.width() - 2;
+    fill_rectangle.h = rectangle.height() - 2;
+    SDL_FillRect(screen_, &fill_rectangle, fill_color);
+}
+
+void Graphics::drawLine(int x1, int y1, int x2, int y2, Uint32 color) {
+    SDL_Rect rectangle;
+    rectangle.x = x1;
+    rectangle.y = y1;
+    const int width = x2 - x1;
+    const int height = y2 - y1;
+    if (width > height) {
+        rectangle.w = width;
+        rectangle.h = 1;
+    } else {
+        rectangle.w = 1;
+        rectangle.h = height;
+    }
+    
+    SDL_FillRect(screen_, &rectangle, color);
 }
