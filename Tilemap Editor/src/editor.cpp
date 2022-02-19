@@ -11,11 +11,14 @@ namespace {
 	const Rectangle kPaletteBounds(24, 48, 96, 384);
 
 	const Rectangle kPaletteSize(24, 48, 16, 64);
-	const int kPaletteStartScale = 50;
+	const int kPaletteStartScale = 5;
+
+	const float kScaleAmount = 0.1f;
 }
 
 Editor::Editor(Graphics& graphics) :
 	background_sprite_(std::make_shared<Sprite>(graphics, "background", 0, 0, Graphics::kScreenWidth, Graphics::kScreenHeight)),
+	palette_sprite_(std::make_shared<Sprite>(graphics, "palette", 0, 0, kPaletteBounds.width(), kPaletteBounds.height())),
 	current_color_(0),
 	editor_mode_(NONE),
 	canvas_tile_size_(1),
@@ -58,13 +61,13 @@ void Editor::stopMove() {
 void Editor::scale(float scale, int x, int y) {
 	if (canvas_) {
 		if (kCanvasBounds.pointIntersection(x, y)) {
-			canvas_->scale(scale, x, y);
+			canvas_->scale(scale * kScaleAmount, x, y);
 			canvas_->snapToBounds(kCanvasBounds);
 		}
 	}
 	if (palette_) {
 		if (kPaletteBounds.pointIntersection(x, y)) {
-			palette_->scale(scale, x, y);
+			palette_->scale(scale * kScaleAmount, x, y);
 			palette_->snapToBounds(kPaletteBounds);
 		}
 	}
@@ -332,7 +335,13 @@ void Editor::truncateCanvasY(Graphics& graphics) {
 }
 
 void Editor::draw(Graphics& graphics) const {
+	if (canvas_) {
+		canvas_->draw(graphics);
+		canvas_->drawGrid(graphics, canvas_tile_size_, canvas_tile_size_);
+	}
+	palette_sprite_->draw(graphics, kPaletteBounds.left(), kPaletteBounds.top());
 	if (palette_) {
+
 		palette_->draw(graphics);
 		palette_->drawGrid(graphics, canvas_tile_size_, canvas_tile_size_);
 
@@ -347,10 +356,6 @@ void Editor::draw(Graphics& graphics) const {
 			graphics.drawLine(screen_left, screen_bottom, screen_right, 0, color);
 			graphics.drawLine(screen_right, screen_top, 0, screen_bottom, color);
 		}
-	}
-	if (canvas_) {
-		canvas_->draw(graphics);
-		canvas_->drawGrid(graphics, canvas_tile_size_, canvas_tile_size_);
 	}
 	background_sprite_->draw(graphics, 0, 0);
 }

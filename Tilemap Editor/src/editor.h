@@ -55,4 +55,5 @@ private:
 	std::vector<std::vector<int>> tile_grid_;
 
 	std::shared_ptr<Sprite> background_sprite_;
+	std::shared_ptr<Sprite> palette_sprite_;
 };

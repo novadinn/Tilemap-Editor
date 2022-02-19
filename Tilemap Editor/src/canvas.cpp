@@ -49,8 +49,8 @@ void Canvas::scale(float scale, int x, int y) {
 	float mouse_x_before_zoom, mouse_y_before_zoom;
 	screenToWorld(x, y, mouse_x_before_zoom, mouse_y_before_zoom);
 
-	scale_x_ += scale * 0.1f;
-	scale_y_ += scale * 0.1f;
+	scale_x_ += scale;
+	scale_y_ += scale;
 	scale_x_ = std::max(scale_x_, 0.1f);
 	scale_y_ = std::max(scale_y_, 0.1f);
 
@@ -125,23 +125,6 @@ void Canvas::draw(Graphics& graphics) const {
 	destination_rectangle.w = screen_right - screen_left;
 	destination_rectangle.h = screen_bottom - screen_top;
 
-	// TODO: offset is ruining
-	/*if (screen_left < bounds_.left()) {
-		destination_rectangle.x = bounds_.left();
-		destination_rectangle.w -= bounds_.left() - screen_left;
-	} 
-	if (screen_right > bounds_.right()) {
-		destination_rectangle.w -= screen_right - bounds_.right();
-	}
-
-	if (screen_top < bounds_.top()) {
-		destination_rectangle.y = bounds_.top();
-		destination_rectangle.h -= bounds_.top() - screen_top;
-	} 
-	if (screen_bottom > bounds_.bottom()) {
-		destination_rectangle.h -= screen_bottom - bounds_.bottom();
-	}*/
-
 	graphics.blitSurface(sprite_sheet_, NULL, &destination_rectangle, false);
 }
 
@@ -152,6 +135,7 @@ void Canvas::drawGrid(Graphics& graphics, int width, int height) const {
 			worldToScreen(x * 1.0f, y * 1.0f, screen_left, screen_top);
 			int screen_right, screen_bottom;
 			worldToScreen(x*1.0f + width, 0, screen_right, screen_bottom);
+
 			graphics.drawLine(screen_left, screen_top, screen_right, screen_bottom, 0);
 			worldToScreen(0, y * 1.0f + height, screen_right, screen_bottom);
 			graphics.drawLine(screen_left, screen_top, screen_right, screen_bottom, 0);
