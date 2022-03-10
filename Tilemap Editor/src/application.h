@@ -3,8 +3,6 @@
 #include <vector>
 #include <memory>
 
-#include "ui_elements.h"
-
 struct Graphics;
 struct Input;
 struct Button;

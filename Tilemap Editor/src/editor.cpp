@@ -149,7 +149,7 @@ void Editor::createTileSheet(Graphics& graphics, int size) {
 }
 
 void Editor::createTileMap(Graphics& graphics, std::string& tile_sheet_name, int x_count, int y_count) {
-	std::ifstream file("content/images/tiles/" + tile_sheet_name + ".txt");
+	std::ifstream file("content/images/" + tile_sheet_name + ".txt");
 	std::string size;
 	std::getline(file, size);
 
@@ -161,7 +161,7 @@ void Editor::createTileMap(Graphics& graphics, std::string& tile_sheet_name, int
 	canvas_tile_size_ = stoi(size);
 
 	editor_mode_ = TILE_MAP;
-	loadTileSheetAsPalette(graphics, "tiles/" + tile_sheet_name);
+	loadTileSheetAsPalette(graphics, tile_sheet_name);
 
 	tile_grid_ = std::vector<std::vector<int>>(y_count, std::vector<int>(x_count, int()));
 	for (size_t row = 0; row < tile_grid_.size(); ++row) {

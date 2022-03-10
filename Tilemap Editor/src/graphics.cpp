@@ -64,7 +64,7 @@ SDL_Surface* Graphics::createSurface(int width, int height) {
     Uint32* pixels = new Uint32[width * height];
     memset(pixels, 255, width * height * sizeof(Uint32));
     pixels_.push_back(pixels);
-    return  SDL_CreateRGBSurfaceWithFormatFrom(pixels, width, height, 32, 4*width, SDL_PIXELFORMAT_BGRA32);
+    return SDL_CreateRGBSurfaceWithFormatFrom(pixels, width, height, 32, 4*width, SDL_PIXELFORMAT_BGRA32);
 }
 
 void Graphics::saveSurface(SDL_Surface* surface, const std::string& file_path) {

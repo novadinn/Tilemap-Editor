@@ -106,7 +106,7 @@ void Application::eventLoop() {
 		std::cout << "Type in file name" << std::endl;
 		std::string name;
 		std::cin >> name;
-		editor_->saveCanvas(graphics, "content/images/tiles/" + name);
+		editor_->saveCanvas(graphics, "content/images/" + name);
 		std::cout << "Finished" << std::endl;
 	};
 	std::shared_ptr<TextButton> save_canvas_button(new TextButton(graphics, "Save file", 498, 0, save_canvas));
@@ -122,7 +122,7 @@ void Application::eventLoop() {
 			std::cout << "Canceled" << std::endl;
 			return;
 		}
-		editor_->loadTileSheetAsCanvas(graphics, "tiles/" + file_path);
+		editor_->loadTileSheetAsCanvas(graphics, file_path);
 		std::cout << "Finished" << std::endl;
 	};
 	std::shared_ptr<TextButton> load_tile_sheet_as_canvas_button(new TextButton(graphics, "Load tile sheet as canvas", load_buttons_x, 16, load_tile_sheet_as_canvas));
@@ -135,7 +135,7 @@ void Application::eventLoop() {
 			std::cout << "Canceled" << std::endl;
 			return;
 		}
-		editor_->loadTileSheetAsPalette(graphics, "tiles/" + file_path);
+		editor_->loadTileSheetAsPalette(graphics, file_path);
 		std::cout << "Finished" << std::endl;
 	};
 	std::shared_ptr<TextButton> load_tile_sheet_as_palette_button(new TextButton(graphics, "Load tile sheet as palette", load_buttons_x, 32, load_tile_sheet_as_palette));
@@ -148,7 +148,7 @@ void Application::eventLoop() {
 			std::cout << "Canceled" << std::endl;
 			return;
 		}
-		editor_->loadTileMap(graphics, "tiles/" + file_path);
+		editor_->loadTileMap(graphics, file_path);
 		std::cout << "Finished" << std::endl;
 	};
 	std::shared_ptr<TextButton> load_tile_map_button(new TextButton(graphics, "Load tile map", load_buttons_x, 48, load_tile_map));
