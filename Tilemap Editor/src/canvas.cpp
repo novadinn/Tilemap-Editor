@@ -4,10 +4,10 @@
 #include <algorithm>
 #include <vector>
 
-#include "graphics.h"
+#include "surface_window.h"
 #include "rectangle.h"
 
-Canvas::Canvas(Graphics& graphics, float start_offset_x, float start_offset_y, int width, int height) :
+Canvas::Canvas(SurfaceWindow& graphics, float start_offset_x, float start_offset_y, int width, int height) :
 	x_offset_(start_offset_x), y_offset_(start_offset_y),
 	scale_x_(1), scale_y_(1),
 	moving_(false),
@@ -16,7 +16,7 @@ Canvas::Canvas(Graphics& graphics, float start_offset_x, float start_offset_y, i
 	
 }
 
-Canvas::Canvas(Graphics& graphics, const std::string& file_path, float start_offset_x, float start_offset_y) :
+Canvas::Canvas(SurfaceWindow& graphics, const std::string& file_path, float start_offset_x, float start_offset_y) :
 	x_offset_(start_offset_x), y_offset_(start_offset_y),
 	scale_x_(1), scale_y_(1), 
 	moving_(false),
@@ -93,11 +93,11 @@ std::optional<Uint32> Canvas::getPixel(int x, int y) const {
 	return std::nullopt;
 }
 
-void Canvas::save(Graphics& graphics, const std::string& file_path) const {
+void Canvas::save(SurfaceWindow& graphics, const std::string& file_path) const {
 	graphics.saveSurface(sprite_sheet_, file_path);
 }
 
-void Canvas::changeSize(Graphics& graphics, int x, int y) {
+void Canvas::changeSize(SurfaceWindow& graphics, int x, int y) {
 	sprite_sheet_ = graphics.changeSurfaceSize(sprite_sheet_, x, y);
 }
 
@@ -113,7 +113,7 @@ SDL_Surface* Canvas::get_surface() const {
 	return sprite_sheet_;
 }
 
-void Canvas::draw(Graphics& graphics) const {
+void Canvas::draw(SurfaceWindow& graphics) const {
 	SDL_Rect destination_rectangle;
 	int screen_left, screen_top;
 	worldToScreen(0, 0, screen_left, screen_top);
@@ -128,7 +128,7 @@ void Canvas::draw(Graphics& graphics) const {
 	graphics.blitSurface(sprite_sheet_, NULL, &destination_rectangle, false);
 }
 
-void Canvas::drawGrid(Graphics& graphics, int width, int height) const {
+void Canvas::drawGrid(SurfaceWindow& graphics, int width, int height) const {
 	for (int x = 0; x < get_width(); x += width) {
 		for (int y = 0; y < get_height(); y += height) {
 			int screen_left, screen_top;

@@ -82,13 +82,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\Projects\Tilemap Editor\Tilemap Editor\SDL2_ttf-2.0.15\include;D:\Projects\Tilemap Editor\Tilemap Editor\SDL2-2.0.18\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Projects\Tilemap Editor\Tilemap Editor\SDL2-2.0.18\lib\x64;D:\Projects\Tilemap Editor\Tilemap Editor\SDL2_ttf-2.0.15\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\Projects\Tilemap Editor\Tilemap Editor\SDL2-2.0.18\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Projects\Tilemap Editor\Tilemap Editor\SDL2-2.0.18\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>D:\Projects\Tilemap Editor\Tilemap Editor\SDL2_ttf-2.0.15\include;D:\Projects\Tilemap Editor\Tilemap Editor\SDL2-2.0.18\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Projects\Tilemap Editor\Tilemap Editor\SDL2-2.0.18\lib\x64;D:\Projects\Tilemap Editor\Tilemap Editor\SDL2_ttf-2.0.15\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\Projects\Tilemap Editor\Tilemap Editor\SDL2-2.0.18\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Projects\Tilemap Editor\Tilemap Editor\SDL2-2.0.18\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -131,9 +131,9 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -147,30 +147,47 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\application.cpp" />
     <ClCompile Include="src\canvas.cpp" />
     <ClCompile Include="src\editor.cpp" />
-    <ClCompile Include="src\graphics.cpp" />
+    <ClCompile Include="src\imgui\imgui.cpp" />
+    <ClCompile Include="src\imgui\imgui_demo.cpp" />
+    <ClCompile Include="src\imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\imgui\imgui_impl_sdl.cpp" />
+    <ClCompile Include="src\imgui\imgui_impl_sdlrenderer.cpp" />
+    <ClCompile Include="src\imgui\imgui_tables.cpp" />
+    <ClCompile Include="src\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\surface_window.cpp" />
     <ClCompile Include="src\input.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\ui_elements.cpp" />
+    <ClCompile Include="src\render_window.cpp" />
+    <ClCompile Include="src\sprite.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\application.h" />
     <ClInclude Include="src\canvas.h" />
     <ClInclude Include="src\editor.h" />
-    <ClInclude Include="src\graphics.h" />
+    <ClInclude Include="src\imgui\imconfig.h" />
+    <ClInclude Include="src\imgui\imgui.h" />
+    <ClInclude Include="src\imgui\imgui_impl_sdl.h" />
+    <ClInclude Include="src\imgui\imgui_impl_sdlrenderer.h" />
+    <ClInclude Include="src\imgui\imgui_internal.h" />
+    <ClInclude Include="src\imgui\imstb_rectpack.h" />
+    <ClInclude Include="src\imgui\imstb_textedit.h" />
+    <ClInclude Include="src\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\surface_window.h" />
     <ClInclude Include="src\input.h" />
     <ClInclude Include="src\rectangle.h" />
-    <ClInclude Include="src\ui_elements.h" />
+    <ClInclude Include="src\render_window.h" />
+    <ClInclude Include="src\sprite.h" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="content\fonts\classic.ttf" />

@@ -2,13 +2,13 @@
 
 #include <fstream>
 
-#include "graphics.h"
+#include "surface_window.h"
 #include "canvas.h"
-#include "ui_elements.h"
+#include "sprite.h"
 
 namespace {
-	const Rectangle kCanvasBounds(144, 40, 477, 401);
-	const Rectangle kPaletteBounds(24, 48, 96, 384);
+	const Rectangle kPaletteBounds(0, 0, 120, 480);
+	const Rectangle kCanvasBounds(120, 0, 520, 480);
 
 	const Rectangle kPaletteSize(24, 48, 16, 64);
 	const int kPaletteStartScale = 5;
@@ -16,10 +16,7 @@ namespace {
 	const float kScaleAmount = 0.1f;
 }
 
-Editor::Editor(Graphics& graphics) :
-	background_sprite_(std::make_shared<Sprite>(graphics, "background", 0, 0, Graphics::kScreenWidth, Graphics::kScreenHeight)),
-	palette_sprite_(std::make_shared<Sprite>(graphics, "palette", 0, 0, kPaletteBounds.width(), kPaletteBounds.height())),
-	current_color_(0),
+Editor::Editor() :
 	editor_mode_(NONE),
 	canvas_tile_size_(1),
 	choosed_tile_row_(0), choosed_tile_col_(0) {
@@ -73,11 +70,11 @@ void Editor::scale(float scale, int x, int y) {
 	}
 }
 
-void Editor::putPixel(int x, int y) {
+void Editor::putPixel(Uint32 color, int x, int y) {
 	if (canvas_) {
 		if (kCanvasBounds.pointIntersection(x, y)) {
 			if (editor_mode_ == TILE_SHEET) {
-				canvas_->drawToTexture(x, y, current_color_);
+				canvas_->drawToTexture(x, y, color);
 			} else if (editor_mode_ == TILE_MAP) {
 				float x_world, y_world;
 				canvas_->screenToWorld(x, y, x_world, y_world);
@@ -111,7 +108,7 @@ void Editor::putPixel(int x, int y) {
 	if (palette_) {
 		if (kPaletteBounds.pointIntersection(x, y)) {
 			if (editor_mode_ == TILE_SHEET) {
-				palette_->drawToTexture(x, y, current_color_);
+				palette_->drawToTexture(x, y, color);
 			} else if (editor_mode_ == TILE_MAP) {
 				float x_world, y_world;
 				palette_->screenToWorld(x, y, x_world, y_world);
@@ -128,32 +125,33 @@ void Editor::putPixel(int x, int y) {
 	}
 }
 
-void Editor::set_color(Uint32 color) {
-	current_color_ = color;
-}
-
-void Editor::setColorAtPoint(int x, int y) {
+std::optional<Uint32> Editor::get_color_at_point(int x, int y) {
 	if (canvas_ && canvas_->getPixel(x, y) != std::nullopt) {
-		current_color_ = *canvas_->getPixel(x, y);
+		return *canvas_->getPixel(x, y);
 	} else if (palette_ && palette_->getPixel(x, y) != std::nullopt) {
-		current_color_ = *palette_->getPixel(x, y);
+		return *palette_->getPixel(x, y);
 	}
+	return std::nullopt;
 }
 
-void Editor::createTileSheet(Graphics& graphics, int size) {
-	canvas_.reset(new Canvas(graphics, Graphics::kScreenWidth * 1.0f / 2, Graphics::kScreenHeight * 1.0f / 2, size, size));
+void Editor::createTileSheet(SurfaceWindow& graphics, int size) {
+	int width, height;
+	graphics.get_window_size(width, height);
+	canvas_.reset(new Canvas(graphics, width * 1.0f / 2, height * 1.0f / 2, size, size));
 
 	canvas_tile_size_ = size;
 
 	editor_mode_ = TILE_SHEET;
 }
 
-void Editor::createTileMap(Graphics& graphics, std::string& tile_sheet_name, int x_count, int y_count) {
-	std::ifstream file("content/images/" + tile_sheet_name + ".txt");
+void Editor::createTileMap(SurfaceWindow& graphics, SurfaceWindow& graphics_palette, std::string& tile_sheet_name, int x_count, int y_count) {
+	std::ifstream file(tile_sheet_name + ".txt");
 	std::string size;
 	std::getline(file, size);
 
-	canvas_.reset(new Canvas(graphics, Graphics::kScreenWidth * 1.0f / 2, Graphics::kScreenHeight * 1.0f / 2, stoi(size) * x_count, stoi(size) * y_count));
+	int width, height;
+	graphics.get_window_size(width, height);
+	canvas_.reset(new Canvas(graphics, width * 1.0f / 2, height * 1.0f / 2, stoi(size) * x_count, stoi(size) * y_count));
 	palette_.reset();
 
 	choosed_tile_row_ = 0;
@@ -161,7 +159,7 @@ void Editor::createTileMap(Graphics& graphics, std::string& tile_sheet_name, int
 	canvas_tile_size_ = stoi(size);
 
 	editor_mode_ = TILE_MAP;
-	loadTileSheetAsPalette(graphics, tile_sheet_name);
+	loadTileSheetAsPalette(graphics_palette, tile_sheet_name);
 
 	tile_grid_ = std::vector<std::vector<int>>(y_count, std::vector<int>(x_count, int()));
 	for (size_t row = 0; row < tile_grid_.size(); ++row) {
@@ -171,14 +169,14 @@ void Editor::createTileMap(Graphics& graphics, std::string& tile_sheet_name, int
 	}
 }
 
-void Editor::createPalette(Graphics& graphics) {
+void Editor::createPalette(SurfaceWindow& graphics) {
 	if (editor_mode_ == TILE_SHEET) {
 		palette_.reset(new Canvas(graphics, kPaletteSize.left() * 1.0f, kPaletteSize.top() * 1.0f, kPaletteSize.width(), kPaletteSize.height()));
 		palette_->scale(kPaletteStartScale, kPaletteSize.left(), kPaletteSize.top());
 	}
 }
 
-void Editor::saveCanvas(Graphics& graphics, const std::string& file_path) {
+void Editor::saveCanvas(SurfaceWindow& graphics, const std::string& file_path) {
 	if (canvas_) {
 		canvas_->save(graphics, file_path + ".bmp");
 
@@ -231,25 +229,29 @@ void Editor::saveCanvas(Graphics& graphics, const std::string& file_path) {
 	}
 }
 
-void Editor::loadTileSheetAsCanvas(Graphics& graphics, const std::string& file_path) {
-	canvas_.reset(new Canvas(graphics, file_path, Graphics::kScreenWidth * 1.0f/2, Graphics::kScreenHeight * 1.0f/2));
+void Editor::loadTileSheetAsCanvas(SurfaceWindow& graphics, const std::string& file_path) {
+	int width, height;
+	graphics.get_window_size(width, height);
+	canvas_.reset(new Canvas(graphics, file_path, width * 1.0f / 2, height * 1.0f / 2));
 	palette_.reset();
 
 	editor_mode_ = TILE_SHEET;
 
-	std::ifstream file("content/images/" + file_path + ".txt");
+	std::ifstream file(file_path + ".txt");
 	std::string size;
 	std::getline(file, size);
 	canvas_tile_size_ = stoi(size);
 }
 
-void Editor::loadTileMap(Graphics& graphics, const std::string& file_path) {
-	canvas_.reset(new Canvas(graphics, file_path, Graphics::kScreenWidth * 1.0f / 2, Graphics::kScreenHeight * 1.0f / 2));
+void Editor::loadTileMap(SurfaceWindow& graphics, const std::string& file_path) {
+	int width, height;
+	graphics.get_window_size(width, height);
+	canvas_.reset(new Canvas(graphics, file_path, width * 1.0f / 2, height * 1.0f / 2));
 	palette_.reset();
 
 	editor_mode_ = TILE_MAP;
 
-	std::ifstream file("content/images/" + file_path + ".txt");
+	std::ifstream file(file_path + ".txt");
 	std::string line;
 	std::getline(file, line);
 	canvas_tile_size_ = stoi(line);
@@ -265,7 +267,7 @@ void Editor::loadTileMap(Graphics& graphics, const std::string& file_path) {
 	}
 }
 
-void Editor::loadTileSheetAsPalette(Graphics& graphics, const std::string& file_path) {
+void Editor::loadTileSheetAsPalette(SurfaceWindow& graphics, const std::string& file_path) {
 	if (!canvas_ || editor_mode_ != TILE_MAP) {
 		return;
 	}
@@ -273,7 +275,7 @@ void Editor::loadTileSheetAsPalette(Graphics& graphics, const std::string& file_
 	editor_mode_ = TILE_MAP;
 }
 
-void Editor::extendCanvasX(Graphics& graphics) {
+void Editor::extendCanvasX(SurfaceWindow& graphics) {
 	if (canvas_) {
 		canvas_->changeSize(graphics, canvas_tile_size_, 0);
 		canvas_->snapToBounds(kCanvasBounds);
@@ -287,7 +289,7 @@ void Editor::extendCanvasX(Graphics& graphics) {
 	}
 }
 
-void Editor::extendCanvasY(Graphics& graphics) {
+void Editor::extendCanvasY(SurfaceWindow& graphics) {
 	if (canvas_) {
 		canvas_->changeSize(graphics, 0, canvas_tile_size_);
 		canvas_->snapToBounds(kCanvasBounds);
@@ -303,7 +305,7 @@ void Editor::extendCanvasY(Graphics& graphics) {
 	}
 }
 
-void Editor::truncateCanvasX(Graphics& graphics) {
+void Editor::truncateCanvasX(SurfaceWindow& graphics) {
 	if (canvas_) {
 		if (canvas_->get_width() == canvas_tile_size_)
 			return;
@@ -320,7 +322,7 @@ void Editor::truncateCanvasX(Graphics& graphics) {
 	}
 }
 
-void Editor::truncateCanvasY(Graphics& graphics) {
+void Editor::truncateCanvasY(SurfaceWindow& graphics) {
 	if (canvas_) {
 		if (canvas_->get_height() == canvas_tile_size_)
 			return;
@@ -334,16 +336,13 @@ void Editor::truncateCanvasY(Graphics& graphics) {
 	}
 }
 
-void Editor::draw(Graphics& graphics) const {
+void Editor::draw(SurfaceWindow& graphics, SurfaceWindow& graphics_palette) const {
 	if (canvas_) {
 		canvas_->draw(graphics);
 		canvas_->drawGrid(graphics, canvas_tile_size_, canvas_tile_size_);
 	}
-	palette_sprite_->draw(graphics, kPaletteBounds.left(), kPaletteBounds.top());
 	if (palette_) {
-
-		palette_->draw(graphics);
-		palette_->drawGrid(graphics, canvas_tile_size_, canvas_tile_size_);
+		palette_->draw(graphics_palette);
 
 		if (editor_mode_ == TILE_MAP) {
 			int screen_left, screen_top;
@@ -351,11 +350,10 @@ void Editor::draw(Graphics& graphics) const {
 			int screen_right, screen_bottom;
 			palette_->worldToScreen(choosed_tile_row_ + canvas_tile_size_, choosed_tile_col_ + canvas_tile_size_, screen_right, screen_bottom);
 			const Uint32 color = (255 << 16) | (0 << 8) | 0;
-			graphics.drawLine(screen_left, screen_top, screen_right, 0, color);
-			graphics.drawLine(screen_left, screen_top, 0, screen_bottom, color);
-			graphics.drawLine(screen_left, screen_bottom, screen_right, 0, color);
-			graphics.drawLine(screen_right, screen_top, 0, screen_bottom, color);
+			graphics_palette.drawLine(screen_left, screen_top, screen_right, 0, color);
+			graphics_palette.drawLine(screen_left, screen_top, 0, screen_bottom, color);
+			graphics_palette.drawLine(screen_left, screen_bottom, screen_right, 0, color);
+			graphics_palette.drawLine(screen_right, screen_top, 0, screen_bottom, color);
 		}
 	}
-	background_sprite_->draw(graphics, 0, 0);
 }

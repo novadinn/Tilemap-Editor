@@ -1,14 +1,16 @@
 ﻿#include "application.h"
 
-#include <SDL.h>
-#include <SDL_ttf.h>
 #include <functional>
 #include <iostream>
+#include <string>
 
 #include "editor.h"
-#include "ui_elements.h"
 #include "input.h"
-#include "graphics.h"
+#include "surface_window.h"
+#include "render_window.h"
+#include "imgui\\imgui.h"
+#include "imgui\\imgui_impl_sdl.h"
+#include "imgui\\imgui_impl_sdlrenderer.h"
 
 namespace {
 	const int kDeltaTime = 1;
@@ -19,188 +21,37 @@ namespace {
 
 Application::Application() {
 	SDL_Init(SDL_INIT_EVERYTHING);
-	TTF_Init();
 	eventLoop();
 }
 
 Application::~Application() {
+	ImGui_ImplSDLRenderer_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
+
 	SDL_Quit();
-	TTF_Quit();
 }
 
 void Application::eventLoop() {
-	Graphics graphics;
+	RenderWindow render_window;
+	SurfaceWindow canvas_window(640, 480, 0);
+	SurfaceWindow palette_window(120, 480, SDL_WINDOW_SKIP_TASKBAR);
+
 	Input input;
 	SDL_Event event;
 
-	mouse_state_ = DRAW;
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsLight();
+	ImGui_ImplSDL2_InitForSDLRenderer(render_window.get_window(), render_window.get_renderer());
+	ImGui_ImplSDLRenderer_Init(render_window.get_renderer());
 
-	editor_.reset(new Editor(graphics));
+	current_color_ = 0;
 
-	const int create_tile_sheet_button_x = 0;
+	editor_.reset(new Editor());
 
-	// Create as tile sheet button
-	std::function<void(Graphics& graphics)> create_as_tile_sheet = [=](Graphics& graphics) {
-		std::cout << "Type in tile size, or \";c\" for cancel" << std::endl;
-		std::string size;
-		std::cin >> size;
-		if (size == ";c") {
-			std::cout << "Canceled" << std::endl;
-			return;
-		}
-		editor_->createTileSheet(graphics, std::max(stoi(size), 1));
-		std::cout << "Finished" << std::endl;
-	};
-	std::shared_ptr<TextButton> create_as_tile_sheet_button(new TextButton(graphics, "Create as tile sheet", create_tile_sheet_button_x, 16, create_as_tile_sheet));
-
-	// Create as tile map button
-	std::function<void(Graphics& graphics)> create_as_tile_map = [=](Graphics& graphics) {
-		std::cout << "Type in tile sheet file name, or \";c\" for cancel" << std::endl;
-		std::string tile_sheet;
-		std::cin >> tile_sheet;
-		if (tile_sheet == ";c") {
-			std::cout << "Canceled" << std::endl;
-			return;
-		}
-		std::cout << "Type in x and y tile count" << std::endl;
-		int x;
-		std::cin >> x;
-		int y;
-		std::cin >> y;
-		editor_->createTileMap(graphics, tile_sheet, std::max(x, 1), std::max(y, 1));
-		std::cout << "Finished" << std::endl;
-	};
-	std::shared_ptr<TextButton> create_as_tile_map_button(new TextButton(graphics, "Create as tile map", create_tile_sheet_button_x, 32, create_as_tile_map));
-
-	std::function<void(Graphics& graphics)> create_palette = [=](Graphics& graphics) {
-		editor_->createPalette(graphics);
-	};
-	std::shared_ptr<TextButton> create_palette_button(new TextButton(graphics, "Create palette", create_tile_sheet_button_x, 48, create_palette));
-
-	// Extend tile sheet x button
-	std::function<void(Graphics& graphics)> extend_canvas_x = [=](Graphics& graphics) {
-		editor_->extendCanvasX(graphics);
-	};
-	std::shared_ptr<TextButton> extend_canvas_x_button(new TextButton(graphics, "Extend X", create_tile_sheet_button_x, 64, extend_canvas_x));
-
-	// Extend tile sheet y button
-	std::function<void(Graphics& graphics)> extend_canvas_y = [=](Graphics& graphics) {
-		editor_->extendCanvasY(graphics);
-	};
-	std::shared_ptr<TextButton> extend_canvas_y_button(new TextButton(graphics, "Extend Y", create_tile_sheet_button_x, 80, extend_canvas_y));
-
-	// Truncate tile sheet x button
-	std::function<void(Graphics& graphics)> truncate_canvas_x = [=](Graphics& graphics) {
-		editor_->truncateCanvasX(graphics);
-	};
-	std::shared_ptr<TextButton> truncate_canvas_x_button(new TextButton(graphics, "Truncate X", create_tile_sheet_button_x, 96, truncate_canvas_x));
-
-	// Truncate tile sheet y button
-	std::function<void(Graphics& graphics)> truncate_canvas_y = [=](Graphics& graphics) {
-		editor_->truncateCanvasY(graphics);
-	};
-	std::shared_ptr<TextButton> truncate_canvas_y_button(new TextButton(graphics, "Truncate Y", create_tile_sheet_button_x, 112, truncate_canvas_y));
-
-	// Save canvas button
-	std::function<void(Graphics& graphics)> save_canvas = [=](Graphics& graphics) {
-		std::cout << "Type in file name" << std::endl;
-		std::string name;
-		std::cin >> name;
-		editor_->saveCanvas(graphics, "content/images/" + name);
-		std::cout << "Finished" << std::endl;
-	};
-	std::shared_ptr<TextButton> save_canvas_button(new TextButton(graphics, "Save file", 498, 0, save_canvas));
-	buttons_.push_back(save_canvas_button);
-
-	// Load button
-	const int load_buttons_x = 150;
-	std::function<void(Graphics& graphics)> load_tile_sheet_as_canvas = [=](Graphics& graphics) {
-		std::cout << "Type in the file path, or \";c\" for cancel" << std::endl;
-		std::string file_path;
-		std::cin >> file_path;
-		if (file_path == ";c") {
-			std::cout << "Canceled" << std::endl;
-			return;
-		}
-		editor_->loadTileSheetAsCanvas(graphics, file_path);
-		std::cout << "Finished" << std::endl;
-	};
-	std::shared_ptr<TextButton> load_tile_sheet_as_canvas_button(new TextButton(graphics, "Load tile sheet as canvas", load_buttons_x, 16, load_tile_sheet_as_canvas));
-
-	std::function<void(Graphics& graphics)> load_tile_sheet_as_palette = [=](Graphics& graphics) {
-		std::cout << "Type in the file path, or \";c\" for cancel" << std::endl;
-		std::string file_path;
-		std::cin >> file_path;
-		if (file_path == ";c") {
-			std::cout << "Canceled" << std::endl;
-			return;
-		}
-		editor_->loadTileSheetAsPalette(graphics, file_path);
-		std::cout << "Finished" << std::endl;
-	};
-	std::shared_ptr<TextButton> load_tile_sheet_as_palette_button(new TextButton(graphics, "Load tile sheet as palette", load_buttons_x, 32, load_tile_sheet_as_palette));
-
-	std::function <void(Graphics& graphics)> load_tile_map = [=](Graphics& graphics) {
-		std::cout << "Type in the file path, or \";c\" for cancel" << std::endl;
-		std::string file_path;
-		std::cin >> file_path;
-		if (file_path == ";c") {
-			std::cout << "Canceled" << std::endl;
-			return;
-		}
-		editor_->loadTileMap(graphics, file_path);
-		std::cout << "Finished" << std::endl;
-	};
-	std::shared_ptr<TextButton> load_tile_map_button(new TextButton(graphics, "Load tile map", load_buttons_x, 48, load_tile_map));
-
-	std::vector<std::shared_ptr<TextButton>> load_buttons;
-	load_buttons.push_back(load_tile_sheet_as_canvas_button);
-	load_buttons.push_back(load_tile_sheet_as_palette_button);
-	load_buttons.push_back(load_tile_map_button);
-	std::shared_ptr<ButtonPopup> load_button(new ButtonPopup(graphics, "Load..", load_buttons_x, 0, load_buttons));
-	buttons_.push_back(load_button);
-
-	// Canvas.. button
-	std::vector<std::shared_ptr<TextButton>> canvas_buttons;
-	canvas_buttons.push_back(create_as_tile_sheet_button);
-	canvas_buttons.push_back(create_as_tile_map_button);
-	canvas_buttons.push_back(create_palette_button);
-	canvas_buttons.push_back(extend_canvas_x_button);
-	canvas_buttons.push_back(extend_canvas_y_button);
-	canvas_buttons.push_back(truncate_canvas_x_button);
-	canvas_buttons.push_back(truncate_canvas_y_button);
-	std::shared_ptr<ButtonPopup> tile_button(new ButtonPopup(graphics, "Canvas..", create_tile_sheet_button_x, 0, canvas_buttons));
-	buttons_.push_back(tile_button);
-
-	// Pipette mode button
-	std::function<void(Graphics& graphics)> pipette_mode = [=](Graphics& graphics) {
-		mouse_state_ = PIPETTE;
-	};
-	std::shared_ptr<TextButton> pipette_button(new TextButton(graphics, "P", 623, 200, pipette_mode));
-	buttons_.push_back(pipette_button);
-
-	// Draw mode button
-	std::function<void(Graphics& graphics)> draw_mode = [=](Graphics& graphics) {
-		mouse_state_ = DRAW;
-	};
-	std::shared_ptr<TextButton> draw_button(new TextButton(graphics, "D", 623, 180, draw_mode));
-	buttons_.push_back(draw_button);
-
-	// Choose color button
-	std::function<void(Graphics& graphics)> choose_color = [=](Graphics& graphics) {
-		std::cout << "Type in RGB values" << std::endl;
-		unsigned int red;
-		std::cin >> red;
-		unsigned int green;
-		std::cin >> green;
-		unsigned int blue;
-		std::cin >> blue;
-		editor_->set_color((blue << 16) | (green << 8) | red);
-		std::cout << "Finished" << std::endl;
-	};
-	std::shared_ptr<TextButton> choose_color_button(new TextButton(graphics, "C", 623, 160, choose_color));
-	buttons_.push_back(choose_color_button);
-
+	bool render_window_focused = false;
 	int last_update_time = SDL_GetTicks();
 	int frame_time_accumulator = 0;
 	bool running = true;
@@ -216,6 +67,9 @@ void Application::eventLoop() {
 			SDL_GetMouseState(&previous_mouse_x, &previous_mouse_y);
 
 			while (SDL_PollEvent(&event)) {
+				if(render_window_focused)
+					ImGui_ImplSDL2_ProcessEvent(&event);
+
 				switch (event.type) {
 				case SDL_KEYDOWN:
 					if (!event.key.repeat)
@@ -233,6 +87,29 @@ void Application::eventLoop() {
 				case SDL_MOUSEWHEEL:
 					input.mouseWheelEvent(event);
 					break;
+				case SDL_WINDOWEVENT:
+					switch (event.window.event) {
+					case SDL_WINDOWEVENT_MOVED:
+						if (event.window.windowID == canvas_window.get_window_id()) {
+							palette_window.set_position(event.window.data1, event.window.data2);
+						}
+						break;
+					case SDL_WINDOWEVENT_FOCUS_GAINED:
+						if (event.window.windowID == canvas_window.get_window_id()) {
+							palette_window.raise();
+						} else if (event.window.windowID == render_window.get_window_id()) {
+							render_window_focused = true;
+						}
+						break;
+					case SDL_WINDOWEVENT_FOCUS_LOST:
+						if (event.window.windowID == render_window.get_window_id()) {
+							render_window_focused = false;
+						}
+						break;
+					default:
+						break;
+					}
+					break;
 				default:
 					break;
 				}
@@ -242,50 +119,117 @@ void Application::eventLoop() {
 				running = false;
 			}
 
-			int mouse_x, mouse_y;
-			SDL_GetMouseState(&mouse_x, &mouse_y);
-
-			Button::updateAll(mouse_x, mouse_y);
-			if (input.wasMouseButtonPressed(SDL_BUTTON_LEFT)) {
-				Button::onClickEvent(graphics, mouse_x, mouse_y);
-			}
+			int canvas_mouse_x, canvas_mouse_y;
+			SDL_GetGlobalMouseState(&canvas_mouse_x, &canvas_mouse_y);
+			int canvas_window_x, canvas_window_y;
+			canvas_window.get_window_position(canvas_window_x, canvas_window_y);
+			canvas_mouse_x -= canvas_window_x;
+			canvas_mouse_y -= canvas_window_y;
 
 			if (editor_) {
 				if (input.wasMouseButtonPressed(SDL_BUTTON_MIDDLE)) {
-					editor_->startMove(mouse_x, mouse_y);
+					editor_->startMove(canvas_mouse_x, canvas_mouse_y);
 				} else if (input.isMouseButtonPressed(SDL_BUTTON_MIDDLE)) {
-					editor_->move(mouse_x, mouse_y, previous_mouse_x, previous_mouse_y);
+					editor_->move(canvas_mouse_x, canvas_mouse_y, previous_mouse_x, previous_mouse_y);
 				} else if (input.wasMouseButtonReleased(SDL_BUTTON_MIDDLE)) {
 					editor_->stopMove();
 				}
 
 				if (input.isMouseButtonPressed(SDL_BUTTON_LEFT)) {
-					if (mouse_state_ == DRAW)
-						editor_->putPixel(mouse_x, mouse_y);
-					else if (mouse_state_ == PIPETTE) {
-						editor_->setColorAtPoint(mouse_x, mouse_y);
+					editor_->putPixel(current_color_, canvas_mouse_x, canvas_mouse_y);
+				} else if (input.isMouseButtonPressed(SDL_BUTTON_RIGHT)) {
+					if (editor_->get_color_at_point(canvas_mouse_x, canvas_mouse_y) != std::nullopt) {
+						current_color_ = *editor_->get_color_at_point(canvas_mouse_x, canvas_mouse_y);
 					}
 				}
 
 				if (input.getWheelMovement() != 0) {
-					editor_->scale(input.getWheelMovement() * kScrollSpeed, mouse_x, mouse_y);
+					editor_->scale(input.getWheelMovement() * kScrollSpeed, canvas_mouse_x, canvas_mouse_y);
 				}
 			}
 
 			frame_time_accumulator -= kDeltaTime;
 		}
 
-		draw(graphics);
+		ImGui_ImplSDLRenderer_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
+		ImGui::NewFrame();
+
+		static int canvas_size = 1;
+		ImGui::Begin("ImGui");
+
+		if (ImGui::Button("Create tile sheet")) {
+			editor_->createTileSheet(canvas_window, canvas_size);
+		}
+		ImGui::SameLine();
+		ImGui::PushItemWidth(100);
+		ImGui::DragInt("X/Y", &canvas_size, 0.1f, 1, 2147483647);
+
+		static int tile_map_size[2] = { 1, 1 };
+		static char buffer_tile_size[256] = {};
+		if (ImGui::Button("Create tile map")) {
+			std::string str = "content/images/";
+			str += buffer_tile_size;
+			editor_->createTileMap(canvas_window, palette_window, str, tile_map_size[0], tile_map_size[1]);
+		}
+		ImGui::SameLine();
+		ImGui::PushItemWidth(100);
+		ImGui::DragInt2("X/Y", tile_map_size, 0.1f, 1, 2147483647);
+		ImGui::SameLine();
+		ImGui::InputText("Tile sheet file path", buffer_tile_size, sizeof(buffer_tile_size));
+
+		if (ImGui::Button("Create palette")) {
+			editor_->createPalette(palette_window);
+		}
+		if (ImGui::Button("Extend X")) {
+			editor_->extendCanvasX(canvas_window);
+		}
+		if (ImGui::Button("Extend Y")) {
+			editor_->extendCanvasY(canvas_window);
+		}
+		if (ImGui::Button("Truncate X")) {
+			editor_->truncateCanvasX(canvas_window);
+		}
+		if (ImGui::Button("Truncate Y")) {
+			editor_->truncateCanvasY(canvas_window);
+		}
+
+		static float color_float[3] = { 0, 0, 0 };
+		if (ImGui::ColorPicker3("Color", color_float, 0)) {
+			current_color_ = ((int(color_float[2] * 255)) << 16) | ((int(color_float[1] * 255)) << 8) | int(color_float[0] * 255);
+		}
+
+		char buffer_save_file[256] = {};
+		if (ImGui::InputText("Save file", buffer_save_file, sizeof(buffer_save_file), ImGuiInputTextFlags_EnterReturnsTrue)) {
+			editor_->saveCanvas(canvas_window, "content/images/" + static_cast<std::string>(buffer_save_file));
+		}
+		char buffer_load_tile_sheet_as_canvas[256] = {};
+		if (ImGui::InputText("Load tile sheet as canvas", buffer_load_tile_sheet_as_canvas, sizeof(buffer_load_tile_sheet_as_canvas), ImGuiInputTextFlags_EnterReturnsTrue)) {
+			editor_->loadTileSheetAsCanvas(canvas_window, "content/images/" + static_cast<std::string>(buffer_load_tile_sheet_as_canvas));
+		}
+		char buffer_load_tile_sheet_as_palette[256] = {};
+		if (ImGui::InputText("Load tile sheet as palette", buffer_load_tile_sheet_as_palette, sizeof(buffer_load_tile_sheet_as_palette), ImGuiInputTextFlags_EnterReturnsTrue)) {
+			editor_->loadTileSheetAsPalette(palette_window, "content/images/" + static_cast<std::string>(buffer_load_tile_sheet_as_palette));
+		}
+		char buffer_load_tile_map[256] = {};
+		if (ImGui::InputText("Load tile map", buffer_load_tile_map, sizeof(buffer_load_tile_map), ImGuiInputTextFlags_EnterReturnsTrue)) {
+			editor_->loadTileMap(canvas_window, "content/images/" + static_cast<std::string>(buffer_load_tile_map));
+		}
+
+		ImGui::End();
+
+		ImGui::Render();
+		render_window.clear();
+		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
+		render_window.flip();
+
+		canvas_window.clear();
+		palette_window.clear();
+		
+		editor_->draw(canvas_window, palette_window);
+		
+		palette_window.flip();
+		canvas_window.flip();
+
 	}
-}
-
-void Application::draw(Graphics& graphics) {
-	graphics.clear();
-
-	if (editor_)
-		editor_->draw(graphics);
-
-	Button::drawAll(graphics);
-
-	graphics.flip();
 }

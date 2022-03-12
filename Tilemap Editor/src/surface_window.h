@@ -13,15 +13,12 @@ struct SDL_Renderer;
 struct SDL_Surface;
 struct SDL_Rect;
 
-struct Graphics {
-	Graphics();
-	~Graphics();
+struct SurfaceWindow {
+	SurfaceWindow(int width, int height, Uint32 flags);
+	~SurfaceWindow();
 
-	static const int kScreenWidth;
-	static const int kScreenHeight;
 
 	SDL_Surface* loadImage(const std::string& file_name, bool black_is_transparent);
-	SDL_Surface* loadFont(const std::string& file_name, const std::string& text, int font_size);
 	SDL_Surface* createSurface(int width, int height);
 	void saveSurface(SDL_Surface* surface, const std::string& file_path);
 
@@ -33,6 +30,12 @@ struct Graphics {
 
 	void drawRect(const Rectangle& rectangle, Uint32 border_color, Uint32 fill_color);
 	void drawLine(int x1, int y1, int x2, int y2, Uint32 color);
+
+	void get_window_position(int& x, int& y) const;
+	void get_window_size(int& x, int& y) const;
+	Uint32 get_window_id() const;
+	void set_position(int x, int y);
+	void raise();
 private:
 	std::map<std::string, SDL_Surface*> sprite_sheets_;
 	std::vector<Uint32*> pixels_;

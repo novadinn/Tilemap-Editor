@@ -2,10 +2,10 @@
 
 #include <vector>
 #include <memory>
+#include <SDL.h>
 
-struct Graphics;
+struct SurfaceWindow;
 struct Input;
-struct Button;
 struct Editor;
 
 struct Application {
@@ -14,14 +14,6 @@ struct Application {
 private:
 	void eventLoop();
 
-	void draw(Graphics& graphics);
-
-	enum MouseState {
-		DRAW,
-		PIPETTE
-	};
-	MouseState mouse_state_;
-
 	std::shared_ptr<Editor> editor_;
-	std::vector<std::shared_ptr<Button>> buttons_;
+	Uint32 current_color_;
 };

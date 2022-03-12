@@ -1,22 +1,15 @@
-#include "graphics.h"
-
-#include <SDL_ttf.h>
-
-//static
-const int Graphics::kScreenWidth = 640;
-//static
-const int Graphics::kScreenHeight = 480;
+#include "surface_window.h"
 
 namespace {
     const Uint32 kClearColor = (51 << 16) | (102 << 8) | 153;
 }
 
-Graphics::Graphics() {
-    window_ = SDL_CreateWindow("Platformer Template", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, kScreenWidth, kScreenHeight, 0);
+SurfaceWindow::SurfaceWindow(int width, int height, Uint32 flags) {
+    window_ = SDL_CreateWindow("Canvas", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
     screen_ = SDL_GetWindowSurface(window_);
 }
 
-Graphics::~Graphics() {
+SurfaceWindow::~SurfaceWindow() {
     for (std::map<std::string, SDL_Surface*>::iterator iter = sprite_sheets_.begin();
         iter != sprite_sheets_.end();
         ++iter) {
@@ -29,10 +22,8 @@ Graphics::~Graphics() {
     SDL_DestroyWindow(window_);
 }
 
-#include <iostream>
-
-SDL_Surface* Graphics::loadImage(const std::string& file_name, bool black_is_transparent) {
-    const std::string file_path = "content/images/" + file_name + ".bmp";
+SDL_Surface* SurfaceWindow::loadImage(const std::string& file_name, bool black_is_transparent) {
+    const std::string file_path = file_name + ".bmp";
     if (sprite_sheets_.count(file_path) == 0) {
         SDL_Surface* image = SDL_LoadBMP(file_path.c_str());
         if (black_is_transparent) {
@@ -44,34 +35,18 @@ SDL_Surface* Graphics::loadImage(const std::string& file_name, bool black_is_tra
     return sprite_sheets_[file_path];
 }
 
-SDL_Surface* Graphics::loadFont(const std::string& file_name, const std::string& text, int font_size) {
-    const std::string file_path = "content/fonts/" + file_name + ".ttf";
-    const std::string index = file_path + text;
-    if (sprite_sheets_.count(index) == 0) {
-        TTF_Font* font = TTF_OpenFont(file_path.c_str(), font_size);
-        SDL_Color color;
-        color.r = 0;
-        color.g = 0;
-        color.b = 0;
-        SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), color);
-        sprite_sheets_[index] = surface;
-        TTF_CloseFont(font);
-    }
-    return sprite_sheets_[index];
-}
-
-SDL_Surface* Graphics::createSurface(int width, int height) {
+SDL_Surface* SurfaceWindow::createSurface(int width, int height) {
     Uint32* pixels = new Uint32[width * height];
     memset(pixels, 255, width * height * sizeof(Uint32));
     pixels_.push_back(pixels);
     return SDL_CreateRGBSurfaceWithFormatFrom(pixels, width, height, 32, 4*width, SDL_PIXELFORMAT_BGRA32);
 }
 
-void Graphics::saveSurface(SDL_Surface* surface, const std::string& file_path) {
+void SurfaceWindow::saveSurface(SDL_Surface* surface, const std::string& file_path) {
     SDL_SaveBMP(surface, file_path.c_str());
 }
 
-SDL_Surface* Graphics::changeSurfaceSize(SDL_Surface* surface, int x, int y) {
+SDL_Surface* SurfaceWindow::changeSurfaceSize(SDL_Surface* surface, int x, int y) {
     const int width = surface->w + x;
     const int height = surface->h + y;
     Uint32* pixels = new Uint32[width * height];
@@ -82,19 +57,19 @@ SDL_Surface* Graphics::changeSurfaceSize(SDL_Surface* surface, int x, int y) {
     return changed_surface;
 }
 
-void Graphics::blitSurface(SDL_Surface* source, SDL_Rect* source_rectangle, SDL_Rect* destination_rectangle, bool use_autocorrention) {
+void SurfaceWindow::blitSurface(SDL_Surface* source, SDL_Rect* source_rectangle, SDL_Rect* destination_rectangle, bool use_autocorrention) {
     SDL_BlitScaled(source, source_rectangle, screen_, destination_rectangle);
 }
 
-void Graphics::clear() {
+void SurfaceWindow::clear() {
     SDL_FillRect(screen_, NULL, kClearColor);
 }
 
-void Graphics::flip() {
+void SurfaceWindow::flip() {
     SDL_UpdateWindowSurface(window_);
 }
 
-void Graphics::drawRect(const Rectangle& rectangle, Uint32 border_color, Uint32 fill_color) {
+void SurfaceWindow::drawRect(const Rectangle& rectangle, Uint32 border_color, Uint32 fill_color) {
     SDL_Rect border_rectangle;
     border_rectangle.x = rectangle.left();
     border_rectangle.y = rectangle.top();
@@ -109,7 +84,7 @@ void Graphics::drawRect(const Rectangle& rectangle, Uint32 border_color, Uint32 
     SDL_FillRect(screen_, &fill_rectangle, fill_color);
 }
 
-void Graphics::drawLine(int x1, int y1, int x2, int y2, Uint32 color) {
+void SurfaceWindow::drawLine(int x1, int y1, int x2, int y2, Uint32 color) {
     SDL_Rect rectangle;
     rectangle.x = x1;
     rectangle.y = y1;
@@ -124,4 +99,24 @@ void Graphics::drawLine(int x1, int y1, int x2, int y2, Uint32 color) {
     }
     
     SDL_FillRect(screen_, &rectangle, color);
+}
+
+void SurfaceWindow::get_window_position(int& x, int& y) const {
+    SDL_GetWindowPosition(window_, &x, &y);
+}
+
+void SurfaceWindow::get_window_size(int& x, int& y) const {
+    SDL_GetWindowSize(window_, &x, &y);
+}
+
+Uint32 SurfaceWindow::get_window_id() const {
+    return SDL_GetWindowID(window_);
+}
+
+void SurfaceWindow::set_position(int x, int y) {
+    SDL_SetWindowPosition(window_, x, y);
+}
+
+void SurfaceWindow::raise() {
+    SDL_RaiseWindow(window_);
 }
